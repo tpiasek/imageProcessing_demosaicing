@@ -17,10 +17,14 @@ def convolve2d(img, kernel, pad_val=0):
 
     elif len(img.shape) == 3:
         for ch in range(result.shape[2]):
+            ch_kernel = kernel
+            if ch == 1 and np.max(img[:, :, ch]) > 1:
+                ch_kernel = kernel / 2
+
             padded_channel = np.pad(img[:, :, ch], ((pad_height, pad_height), (pad_width, pad_width)), mode='constant', constant_values=pad_val)
             for i in range(result.shape[0]):
                 for j in range(result.shape[1]):
-                    result[i, j, ch] = np.clip(np.sum(padded_channel[i:i+krn_height, j:j+krn_width] * kernel), 0, 255)
+                    result[i, j, ch] = np.clip(np.sum(padded_channel[i:i+krn_height, j:j+krn_width] * ch_kernel), 0, 255)
 
     else:
         print("Err: Wrong image format!" + "\n" +

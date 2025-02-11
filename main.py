@@ -7,7 +7,7 @@ from src.extractions import extract_red, extract_green, extract_blue
 from src.cfa_simulation import simulate_cfa, simulate_cfa_3d
 import src.interpolation as interp
 from src.convolution import convolve2d, normalize_image
-import cv2
+#import cv2
 
 
 def demosaic_bayer_interp(img) -> np.ndarray:
@@ -66,16 +66,7 @@ def demosaic_bayer_conv(img, kernel):
               "Image shape: " + str(img.shape))
         return img
 
-    # Convolve each channel with the demosaicing kernel
-    red_convolved = convolve2d(red, kernel)
-    if np.max(green) > 1:
-        green_convolved = convolve2d(green, kernel/2)
-    else:
-        green_convolved = convolve2d(green, kernel)
-    blue_convolved = convolve2d(blue, kernel)
-
-    # Stack the convolved channels to form the demosaiced image
-    result_img = np.dstack([red_convolved, green_convolved, blue_convolved])
+    result_img = convolve2d(img=img, kernel=kernel)
 
     # Normalize values to the valid range (0-255)
     result_img = normalize_image(result_img)
@@ -106,6 +97,8 @@ if __name__ == '__main__':
     # image_interp = demosaic_bayer_interp(image_interp)  # Demosaic image
     image_interp = sk.io.imread("img/saved/Demosaicing/interp_demosaic_min.jpg")
 
+    print("Interpolation done.\n")
+
     """ DEMOSAICING - CONVOLUTION """
 
     image_conv = simulate_cfa_3d(image)  # Simulate CFA
@@ -119,14 +112,16 @@ if __name__ == '__main__':
     kernel /= np.sum(kernel)
 
     # Perform demosaicing
-    # final_conv_img = demosaic_bayer_conv(image_conv, kernel)
-    # final_conv_img_d = demosaic_bayer_conv(image_conv, kernel_d)
+    final_conv_img = demosaic_bayer_conv(image_conv, kernel)
+    final_conv_img_d = demosaic_bayer_conv(image_conv, kernel_d)
+
+    print("Convolution done.")
 
     # Read demosaiced images from files to save time
-    final_conv_img = sk.io.imread("img/saved/Demosaicing/conv_demosaic_bilinear_min.jpg")
-    final_conv_img_d = sk.io.imread("img/saved/Demosaicing/conv_demosaic_midkernel_min.jpg")
+    #final_conv_img = sk.io.imread("img/saved/Demosaicing/conv_demosaic_bilinear_min.jpg")
+    #final_conv_img_d = sk.io.imread("img/saved/Demosaicing/conv_demosaic_midkernel_min.jpg")
 
-    """ COMPARE DIFFERENT DEMOSAICING TECHNIQUES
+    #COMPARE DIFFERENT DEMOSAICING TECHNIQUES
 
     full_res_img = sk.io.imread("img/test_min.jpg")
     # full_res_img = sk.transform.resize(full_res_img, (len(image_conv), len(image_conv[0])))
@@ -148,7 +143,7 @@ if __name__ == '__main__':
           "Convolution (bi-linear) SSIM: " + str(conv_compare[1]) + "\n" +
           "Convolution (averaging) SSIM: " + str(conv_compare_d[1]))
     
-    """
+
 
     """ COMPARE INTERPOLATION AND CONVOLUTION 
     sim_interp_img = simulate_cfa_3d(image_interp)  # Simulate CFA
@@ -173,17 +168,17 @@ if __name__ == '__main__':
     cm_b = LinearSegmentedColormap.from_list('blue', blues, N=20)
 
 
-    # # Plotting the channels
-    # _, ax = plt.subplots(2, 2, figsize=(14, 10), gridspec_kw={'left': 0.03, 'right': 0.97, 'top': 0.96, 'bottom': 0.04, 'wspace': 0.11, 'hspace': 0.2})
-    #
-    # ax[0][0].imshow(image_interp)  # Demosaiced image
-    # ax[0][0].set_title('Demosaiced image')
-    # ax[0][1].imshow(image_interp[:, :, 0], cmap=cm_r)  # Red channel
-    # ax[0][1].set_title('Red channel')
-    # ax[1][0].imshow(image_interp[:, :, 1], cmap=cm_g)  # Green channel
-    # ax[1][0].set_title('Green channel')
-    # ax[1][1].imshow(image_interp[:, :, 2], cmap=cm_b)  # Blue channel
-    # ax[1][1].set_title('Blue channel')
+    # Plotting the channels
+    _, ax = plt.subplots(2, 2, figsize=(14, 10), gridspec_kw={'left': 0.03, 'right': 0.97, 'top': 0.96, 'bottom': 0.04, 'wspace': 0.11, 'hspace': 0.2})
+
+    ax[0][0].imshow(image_interp)  # Demosaiced image
+    ax[0][0].set_title('Demosaiced image')
+    ax[0][1].imshow(image_interp[:, :, 0], cmap=cm_r)  # Red channel
+    ax[0][1].set_title('Red channel')
+    ax[1][0].imshow(image_interp[:, :, 1], cmap=cm_g)  # Green channel
+    ax[1][0].set_title('Green channel')
+    ax[1][1].imshow(image_interp[:, :, 2], cmap=cm_b)  # Blue channel
+    ax[1][1].set_title('Blue channel')
     """
     # Plotting comparison between original and interpolation
     _, ax2 = plt.subplots(1, 2, figsize=(12, 6), gridspec_kw={'left': 0.03, 'right': 0.97, 'wspace': 0.11})
@@ -205,16 +200,18 @@ if __name__ == '__main__':
     # Plotting comparison between convolution and interpolation
     _, ax4 = plt.subplots(1, 2, figsize=(12, 6), gridspec_kw={'left': 0.03, 'right': 0.97, 'wspace': 0.11})
 
-    # ax4[0].imshow(image_interp)
-    # ax4[0].set_title('Demosaiced Image (Interpolation)')
-    # ax4[1].imshow(final_conv_img)
-    # ax4[1].set_title('Demosaiced Image (Convolution)')
+    ax4[0].imshow(image_interp)
+    ax4[0].set_title('Demosaiced Image (Interpolation)')
+    ax4[1].imshow(final_conv_img)
+    ax4[1].set_title('Demosaiced Image (Convolution)')
 
-    # ax4[0].imshow(final_conv_img)
-    # ax4[0].set_title('Demosaiced Image (bi-linear)')
-    # ax4[1].imshow(final_conv_img_d)
-    # ax4[1].set_title('Demosaiced Image (averaging)')
+    ax4[0].imshow(final_conv_img)
+    ax4[0].set_title('Demosaiced Image (bi-linear)')
+    ax4[1].imshow(final_conv_img_d)
+    ax4[1].set_title('Demosaiced Image (averaging)')
 
+    """__________EDGE DETECTION___________
+    
     A = np.array([[0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0],
                   [0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0],
                   [0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0],
@@ -228,7 +225,7 @@ if __name__ == '__main__':
                   [0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0],
                   [0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0]])
 
-    """ CONVOLUTION KERNELS """
+    # CONVOLUTION KERNELS
     kernel_edge = np.array([[0, 1, 0],
                             [1, -4, 1],
                             [0, 1, 0]])
@@ -300,5 +297,9 @@ if __name__ == '__main__':
     # sk.io.imsave("img/saved/interp_demosaic_min_defects.jpg", np.ndarray.astype(image_interp[400:630, 65:500, :], np.uint8))
     # sk.io.imsave("img/saved/conv_demosaic_bilinear_min_defects.jpg", np.ndarray.astype(final_conv_img[400:630, 65:500, :], np.uint8))
     # sk.io.imsave("img/saved/conv_demosaic_midkernel_min_defects.jpg", np.ndarray.astype(final_conv_img_d[400:630, 65:500, :], np.uint8))
+    
+    """
+
+    img_mosaiced = sk.io.imread("img/test.jpg")  # Load image
 
     plt.show()
