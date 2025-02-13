@@ -51,20 +51,6 @@ def demosaic_bayer_conv(img, kernel):
     :param kernel: Kernel array for convolution
     :return: Demosaiced image -> ndarray[H, W, 3]
     """
-    # Separate color channels
-    if len(img.shape) == 2 or len(img.shape) == 3 and img.shape[2] == 1:
-        red = extract_red(img)
-        green = extract_green(img)
-        blue = extract_blue(img)
-    elif len(img.shape) == 3 and img.shape[2] == 3:
-        red = img[:, :, 0]
-        green = img[:, :, 1]
-        blue = img[:, :, 2]
-    else:
-        print("Err: Wrong image format!" + "\n" +
-              "Image type: " + str(type(img)) + "\n" +
-              "Image shape: " + str(img.shape))
-        return img
 
     result_img = convolve2d(img=img, kernel=kernel)
 
