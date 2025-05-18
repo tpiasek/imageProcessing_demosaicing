@@ -5,7 +5,7 @@ import numpy as np
 from src import convolution as conv
 import matplotlib.animation as animation
 
-img_m = sk.io.imread("img/test_min.jpg")  # Load image
+img_m = sk.io.imread("img/test_micro.jpg")  # Load image
 img_m = cfa_sim.simulate_cfa_3d(img_m)
 
 kernel = np.array([[0.25, 0.5, 0.25],
@@ -16,27 +16,30 @@ print("Convolution starts...")
 img_res, img_anim = conv.convolve2d(img_m, kernel, logging=True)
 print("Convolution done.")
 img_res = conv.normalize_image(img_res)
-
-fps = 60
+for i in range(len(img_anim)):
+    img_anim[i] = conv.normalize_image(img_anim[i])
 
 fig = plt.figure(figsize=(8,8))
-ax1 = plt.axes(xlim=(0, img_res.shape[0]), ylim=(0, img_res.shape[1]))
+ax1 = plt.axes(xlim=(0, img_res.shape[1]), ylim=(0, img_res.shape[0]))
 img_plot = plt.imshow(img_anim[0], interpolation='none')
 
-print(len(img_anim))
+img_anim = np.array(img_anim)
+
+print(img_anim.shape)
+print("img_anim length: ", len(img_anim))
 
 def animate(frame):
-    img_plot.set_array(img_anim[frame])
+    img_plot.set_array(np.flipud(img_anim[frame]))
     return [img_plot]
 
 anim = animation.FuncAnimation(
     fig,
     animate,
-    frames = len(img_anim),
-    interval = 100 / fps,
+    frames = int(len(img_anim)),
+    interval = 1,
 )
 
-writergif = animation.PillowWriter(fps=fps)
+writergif = animation.PillowWriter()
 anim.save('img/test_anim.gif', writer=writergif)
 
 _, ax = plt.subplots(1, 2, figsize=(8, 8))
