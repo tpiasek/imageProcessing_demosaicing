@@ -2,69 +2,26 @@ import numpy as np
 from matplotlib import pyplot as plt
 from matplotlib.colors import LinearSegmentedColormap
 import skimage as sk
-from src.utilities import print_channels_data, compare_with_original
-from src.extractions import extract_red, extract_green, extract_blue
+from src.utilities import compare_with_original, kernelBilinear3x3
 from src.cfa_simulation import simulate_cfa, simulate_cfa_3d
-import src.interpolation as interp
-from src.convolution import convolve2d, normalize_image
+from src.demosaicing import demosaic_bayer_interp, demosaic_bayer_conv
 #import cv2
 
 
-def demosaic_bayer_interp(img) -> np.ndarray:
-    """
-    Demosaic the image using bi-linear interpolation
-    :param img: Image to demosaic -> ndarray[H, W, 3]
-    :return: Demosaiced image -> ndarray[H, W, 3]
-    """
-    # Separate color channels
-    if len(img.shape) == 2 or (len(img.shape) == 3 and img.shape[2] == 1):
-        red = extract_red(img)
-        green = extract_green(img)
-        blue = extract_blue(img)
-    elif len(img.shape) == 3 and img.shape[2] == 3:
-        red = img[:, :, 0]
-        green = img[:, :, 1]
-        blue = img[:, :, 2]
-    else:
-        print("Err: Wrong image format!" + "\n" +
-              "Image type: " + str(type(img)) + "\n" +
-              "Image shape: " + str(img.shape))
-        return img
-
-    # Interpolate channels
-    red = interp.interpolate_red(red)
-    green = interp.interpolate_green(green)
-    blue = interp.interpolate_blue(blue)
-
-    print_channels_data(red, green, blue)  # Print data about the channels
-
-    result_img = np.dstack([red, green, blue])  # Merge channels
-    print("Result image: " + str(result_img.shape))  # Print data about the result image
-
-    return result_img
-
-
-def demosaic_bayer_conv(img, kernel):
-    """
-    Demosaic the image using convolution
-    :param img: Image to demosaic -> ndarray[H, W, 3], ndarray[H, W]
-    :param kernel: Kernel array for convolution
-    :return: Demosaiced image -> ndarray[H, W, 3]
-    """
-
-    result_img = convolve2d(img=img, kernel=kernel)
-
-    # Normalize values to the valid range (0-255)
-    result_img = normalize_image(result_img)
-
-    return result_img
-
 
 if __name__ == '__main__':
+    """
+    SHORT MANUAL
+    # Load an image (ex. with skimage.io.imread)
+    # Simulate CFA filter using simulate_cfa (grayscale) or simulate_cfa_3d (color)
+    # Choose kernel from src.utilities or create your own (for convolution)
+    # Demosaic an image with functions from demosaicing.py file
+    """
 
     """ DEMOSAICING - INTERPOLATION """
 
-    image = sk.io.imread("img/test_min.jpg")  # Load image
+    # Load an image (ex. with skimage.io.imread)
+    image = sk.io.imread("img/test_min.jpg")
     image = image[:, :, :3]  # Remove alpha channel if exists
 
     image_test = [[255, 255, 255, 255, 255, 255, 255, 255, 255],
@@ -77,11 +34,14 @@ if __name__ == '__main__':
                   [255, 255, 255, 255, 128, 255, 255, 255, 255],
                   [255, 255, 255, 255, 255, 255, 255, 255, 255]]
 
+    # Save original image for later comparisons
     # original_img = image
-    # image_interp = simulate_cfa_3d(image)  # Simulate CFA
 
-    # image_interp = demosaic_bayer_interp(image_interp)  # Demosaic image
-    image_interp = sk.io.imread("img/saved/Demosaicing/interp_demosaic_min.jpg")
+    # Simulate CFA filter using simulate_cfa (grayscale) or simulate_cfa_3d (color)
+    image_interp = simulate_cfa_3d(image)
+
+    # Demosaic an image using functions from demosaicing.py file
+    image_interp = demosaic_bayer_interp(image_interp)
 
     print("Interpolation done.\n")
 
@@ -89,13 +49,11 @@ if __name__ == '__main__':
 
     image_conv = simulate_cfa_3d(image)  # Simulate CFA
 
-    # Demosaicing kernel (e.g., bi-linear)
-    kernel = np.array([[0.25, 0.5, 0.25],
-                       [0.5, 1, 0.5],
-                       [0.25, 0.5, 0.25]], dtype='float64')
+    # Demosaicing kernel (e.g., bi-linear) (from src.utilities)
+    kernel = kernelBilinear3x3
+    kernel /= np.sum(kernel)
 
     kernel_d = np.array([[1, 1], [1, 1]]).astype('float64')
-    kernel /= np.sum(kernel)
 
     # Perform demosaicing
     final_conv_img = demosaic_bayer_conv(image_conv, kernel)

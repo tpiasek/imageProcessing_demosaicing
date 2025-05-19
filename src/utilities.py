@@ -2,6 +2,11 @@ import numpy as np
 import skimage as sk
 
 
+kernelBilinear3x3 = np.array([[0.25, 0.5, 0.25],
+                       [0.5, 1, 0.5],
+                       [0.25, 0.5, 0.25]], dtype='float64')
+
+
 def print_channels_data(r, g, b):
     """
     Print data about the channels
